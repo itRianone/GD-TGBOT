@@ -17,39 +17,42 @@ gauth = GoogleAuth()
 #start connection google drive, (behind the code opening browser, inputing the data from setting.yaml file)
 drive = GoogleDrive(gauth)  
 
-@bot.message_handler(content_types=['video', 'photo', 'sticker'])
+@bot.message_handler(content_types=['video', 'photo', 'sticker', 'document'])
 def main(message):
 
   try:
     if message.content_type == 'photo':
-      file_info = bot.get_file(message.photo[len(message.photo)-1].file_id)
+      file_info = bot.get_file(message.photo.file_id)
+    elif message.content_type == 'video':
+      file_info = bot.get_file(message.video.file_id)
+    elif message.content_type == 'sticker':
+      file_info = bot.get_file(message.sticker.file_id)
     else:
-      file_info = bot.get_file(message.photo[len(message.photo)-1].file_id)
-      print('bruh, what a cringe file??')
+      file_info = bot.get_file(message.document.file_id)
     
     #print(file_info.file_path)
     #print(os.path.exists(file_info.file_path)    
     
-    if os.path.exists(file_info.file_path):
+    src = file_info.file_path
+    if os.path.exists('media/' + str(src)):
       bot.reply_to(message, "уже есть") 
     else:
       bot.reply_to(message, "Заберу себе") 
-      img = open('photos/i_take_it.jpg','rb')
+      img = open('media/photos/i_take_it.jpg','rb')
       bot.send_photo(message.chat.id, img)
       img.close()
       #bot download file in photos folder    
-      downloaded_file = bot.download_file(file_info.file_path)
+      downloaded_file = bot.download_file(src)
       print(file_info)
-      src = file_info.file_path
 
-      with open(src, 'wb') as new_file:
+      with open('media/' + str(src), 'wb') as new_file:
         new_file.write(downloaded_file)
 
       #creating file in folder, which folder code decided from id
       gfile = drive.CreateFile({'parents': [{'id': parent_folder_id}]})
       
       #set which file add
-      gfile.SetContentFile(src)
+      gfile.SetContentFile('media/' + str(src))
       #uploading
       gfile.Upload()
 
